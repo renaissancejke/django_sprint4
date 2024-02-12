@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.core.mail import send_mail
 
 from .models import Comment, Post, User
@@ -8,9 +9,10 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ('title', 'text', 'pub_date', 'category', 'location', 'image')
+        exclude = ('author',)
         widgets = {
-            'pub_date': forms.DateInput(attrs={'type': 'date'})
+            'pub_date': forms.DateTimeInput(format='%Y-%m-%dT%H:%M',
+                                            attrs={'type': 'datetime-local'})
         }
 
     def message(self):
@@ -20,7 +22,7 @@ class PostForm(forms.ModelForm):
             subject='Another Beatles member',
             message=f'{first_name} {last_name} пытался опубликовать запись!',
             from_email='birthday_form@blogicum.not',
-            recipient_list=['admin@blogicum.not'],
+            recipient_list=[settings.RECIPIENT_EMAIL],
             fail_silently=True,
         )
 
