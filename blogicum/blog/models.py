@@ -1,7 +1,7 @@
-from core.models import BaseModel
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from core.models import BaseModel
 User = get_user_model()
 
 
@@ -28,7 +28,7 @@ class Category(BaseModel):
 
 
 class Location(BaseModel):
-    title = models.CharField(
+    name = models.CharField(
         max_length=256,
         verbose_name='Название места'
     )
@@ -38,7 +38,7 @@ class Location(BaseModel):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
 class Post(BaseModel):
@@ -104,3 +104,6 @@ class Comment(models.Model):
         ordering = ('created_at',)
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return f'Комментарий автора {self.author} к посту {self.post}'

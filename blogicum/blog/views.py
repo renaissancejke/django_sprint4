@@ -9,16 +9,10 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from django.views.generic.edit import DeletionMixin
 
 from blog.forms import CommentForm, PostForm, ProfileForm
+from blog.mixins import CommentMixin, DispatchMixin
 from blog.models import Category, Comment, Post, User
 
 MAX_POSTS = 10
-
-
-class DispatchMixin:
-    def dispatch(self, request, *args, **kwargs):
-        if (self.get_object().author != request.user):
-            return redirect('blog:post_detail', pk=kwargs['pk'])
-        return super().dispatch(request, *args, **kwargs)
 
 
 class ProfileListView(ListView):
@@ -28,7 +22,7 @@ class ProfileListView(ListView):
 
     def get_queryset(self):
         return (
-            self.model.objects.select_related('author')
+            self.model.objects.select_related('author', 'category', 'location')
             .filter(author__username=self.kwargs['username'])
             .annotate(comment_count=Count("comment"))
             .order_by("-pub_date"))
@@ -97,7 +91,7 @@ def category_posts(request, category_slug):
         Category,
         slug=category_slug, is_published=True
     )
-    post_list = Post.objects.filter(
+    post_list = Post.objects.select_related('author').filter(
         pub_date__lte=timezone.now(),
         is_published=True,
         category__is_published=True,
@@ -144,14 +138,7 @@ class PostDeleteView(DeletionMixin, PostUpdateView):
 @login_required
 def add_comment(request, post_id, comment_id=None):
     post = get_object_or_404(Post, pk=post_id)
-    if request.method == 'POST':
-        if comment_id:
-            form = CommentForm(
-                instance=get_object_or_404(Comment, pk=comment_id),
-                data=request.POST
-            )
-        else:
-            form = CommentForm(data=request.POST)
+    form = CommentForm(request.POST)
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
@@ -160,19 +147,11 @@ def add_comment(request, post_id, comment_id=None):
     return redirect('blog:post_detail', pk=post_id)
 
 
-class CommentUpdateView(LoginRequiredMixin, DispatchMixin, UpdateView):
-    model = Comment
-    template_name = 'blog/comment.html'
-    form_class = CommentForm
-
-    def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'pk': self.kwargs['pk']})
+class CommentUpdateView(LoginRequiredMixin, DispatchMixin,
+                        CommentMixin, UpdateView):
+    pass
 
 
-class CommentDeleteView(LoginRequiredMixin, DispatchMixin, DeleteView):
-    model = Comment
-    template_name = 'blog/comment.html'
-    form_class = CommentForm
-
-    def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'pk': self.kwargs['pk']})
+class CommentDeleteView(LoginRequiredMixin, DispatchMixin,
+                        CommentMixin, DeleteView):
+    pass
