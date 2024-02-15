@@ -91,7 +91,9 @@ def category_posts(request, category_slug):
         Category,
         slug=category_slug, is_published=True
     )
-    post_list = Post.objects.select_related('author').filter(
+    post_list = Post.objects.select_related('author',
+                                            'category',
+                                            'location').filter(
         pub_date__lte=timezone.now(),
         is_published=True,
         category__is_published=True,
@@ -138,7 +140,7 @@ class PostDeleteView(DeletionMixin, PostUpdateView):
 @login_required
 def add_comment(request, post_id, comment_id=None):
     post = get_object_or_404(Post, pk=post_id)
-    form = CommentForm(request.POST)
+    form = CommentForm(request.POST or None)
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user

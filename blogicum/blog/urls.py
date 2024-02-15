@@ -8,14 +8,14 @@ urlpatterns = [
     path('', views.IndexListView.as_view(), name='index'),
     path('posts/<int:pk>/', views.post_detail, name='post_detail'),
     path(
+        'profile/edit/',
+        views.ProfileUpdateView.as_view(),
+        name='edit_profile'
+    ),
+    path(
         'profile/<str:username>/',
         views.ProfileListView.as_view(),
         name='profile'
-    ),
-    path(
-        'profile/<str:username>/edit/',
-        views.ProfileUpdateView.as_view(),
-        name='edit_profile'
     ),
     path('posts/create/', views.PostCreateView.as_view(), name='create_post'),
     path(
